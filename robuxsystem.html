@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tip Board</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f1f1;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .form-container, .board, .owner-panel {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      margin: 10px auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    .board {
+      max-height: 300px;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .entry {
+      border-bottom: 1px solid #ddd;
+      padding: 5px 0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Public Tip Board</h1>
+
+  <div class="form-container">
+    <input type="text" id="name" placeholder="Name">
+    <input type="number" id="amount" placeholder="Amount (10–100)">
+    <button onclick="submitEntry()">Submit</button>
+
+    <div id="errorMsg" class="error hidden">❌ Please enter a Roblox name and Robux amount between 10–100.</div>
+    <div id="successMsg" class="success hidden">✅ Submitted!</div>
+  </div>
+
+  <div class="board">
+    <h3>Recent Entries</h3>
+    <div id="entries"></div>
+  </div>
+
+  <div class="owner-panel">
+    <h3>Owner Permission</h3>
+    <input type="text" id="ownerID" placeholder="Owner ID">
+    <input type="password" id="ownerPass" placeholder="Owner Password">
+    <button onclick="loginOwner()">Login</button>
+
+    <button id="clearButton" onclick="clearEntries()" class="hidden" style="background:#dc3545;color:white;">
+      🔥 Clear All Entries
+    </button>
+    <div id="ownerMsg" class="error hidden">❌ Invalid owner credentials.</div>
+  </div>
+
+  <script>
+    // ✅ Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBKKIp44WhygWuaC1dj4WaEVOTOAP8UrvA",
+      authDomain: "robux-system-41a79.firebaseapp.com",
+      databaseURL: "https://robux-system-41a79-default-rtdb.firebaseio.com",
+      projectId: "robux-system-41a79",
+      storageBucket: "robux-system-41a79.appspot.com",
+      messagingSenderId: "225928466574",
+      appId: "1:225928466574:web:4d0c42a90391572823f9df",
+      measurementId: "G-0HEWVB559D"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function submitEntry() {
+      const name = document.getElementById('name').value.trim();
+      const amount = parseInt(document.getElementById('amount').value);
+      const errorMsg = document.getElementById('errorMsg');
+      const successMsg = document.getElementById('successMsg');
+
+      errorMsg.classList.add('hidden');
+      successMsg.classList.add('hidden');
+
+      if (!name || isNaN(amount) || amount < 10 || amount > 100) {
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      db.ref("entries").push({ name, amount });
+      document.getElementById('name').value = '';
+      document.getElementById('amount').value = '';
+      successMsg.classList.remove('hidden');
+    }
+
+    function loadEntries() {
+      db.ref("entries").on("value", snapshot => {
+        const entriesDiv = document.getElementById('entries');
+        entriesDiv.innerHTML = '';
+        const data = snapshot.val();
+        if (data) {
+          for (let id in data) {
+            const entry = data[id];
+            const div = document.createElement('div');
+            div.className = 'entry';
+            div.textContent = `Name: ${entry.name} — Amount: $${entry.amount}`;
+            entriesDiv.appendChild(div);
+          }
+        }
+      });
+    }
+
+    function loginOwner() {
+      const id = document.getElementById('ownerID').value.trim();
+      const pass = document.getElementById('ownerPass').value;
+      const clearButton = document.getElementById('clearButton');
+      const msg = document.getElementById('ownerMsg');
+
+      msg.classList.add('hidden');
+
+      if (id === "4128958700" && pass === "Painful I Have Been Passed It, It Is Not A Secret Anymore.") {
+        clearButton.classList.remove('hidden');
+      } else {
+        msg.classList.remove('hidden');
+      }
+    }
+
+    function clearEntries() {
+      if (confirm("Are you sure you want to delete ALL entries?")) {
+        db.ref("entries").remove();
+      }
+    }
+
+    // Load existing entries on page load
+    loadEntries();
+  </script>
+</body>
+</html>
